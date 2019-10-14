@@ -77,7 +77,7 @@ object TimeSeriesTask {
   val fileLists=dir.listFiles().filter(file=>file.getName.endsWith(".csv"))
    
   if(fileLists(0).exists){
-  println(Try(fileLists(0).renameTo(new File(resultPath))).getOrElse(false)) 
+  println(fileLists(0).renameTo(new File(resultPath)).getOrElse(false)) 
   println("Output File Generated : "+resultPath)
   }
    
