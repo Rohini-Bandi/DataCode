@@ -1,0 +1,62 @@
+package com.sundogsoftware.spark
+
+import org.apache.spark._
+import org.apache.spark.SparkContext._
+import org.apache.log4j._
+import breeze.linalg.min
+import breeze.linalg.max
+import org.apache.spark.sql.{DataFrame, SparkSession}
+
+
+
+object MinimumObj {
+  
+case class InputDat(loc :String, tmpType:String, temp:Float)  
+  def main(args: Array[String]){
+    
+    
+    //Spark Session Creation
+   val spark = SparkSession.builder
+               .appName("TimeSeries")  
+               .master("local[*]") 
+               .getOrCreate()  
+   
+   Logger.getLogger("org").setLevel(Level.ERROR)
+   
+   //Reading Input file
+   val input=spark.read.textFile("../Inputs_Spark/Weather1800.csv")
+   
+   //Importing implicit encoder to store Array[String] Instances in Dataset
+   import spark.implicits._
+    
+   //Mapping Rdd to the case class 'InputData' which defines the schema of the Dataframe
+  val inputLines =input.map(x=>x.toString().split("\\s+")).map(input=>InputDat(input(0).toString,input(1).toString,input(2).toFloat))
+   
+  val inputDF=inputLines.toDF
+  
+ // inputDF.filter($"tmpType"=="Max")
+  val fltr=inputDF.filter("tmpType === 'Max'")
+  
+  val resultData=fltr.groupBy($"loc").max("temp")
+ 
+  resultData.collect.foreach(println)
+ 
+spark.close()
+    
+  }
+    
+    
+    
+ 
+  def parseLine(input : String)={
+    val fields=input.split(",")
+   // println("9")
+      val location=fields(0)
+     // println("10")
+      val tempType=fields(2)
+     // println("11")
+      val temparature=fields(3).toFloat* 0.1f * (9.0f / 5.0f) + 32.0f
+      //println(s" Temparature is $temparature")
+    InputDat(location,tempType,temparature)
+  }
+}
